@@ -27,14 +27,14 @@
 using namespace qapplication;
 
 Application::Application(int &argc, char **argv)
-	: QApplication(argc, argv)
+    : QApplication(argc, argv)
 {
-	qRegisterMetaType<WidgetFactory>();
+    qRegisterMetaType<WidgetFactory>();
 
-	setApplicationName("DFHack");
-	setOrganizationName("DFHack");
+    setApplicationName("DFHack");
+    setOrganizationName("DFHack");
 
-	setQuitOnLastWindowClosed(false);
+    setQuitOnLastWindowClosed(false);
 }
 
 Application::~Application()
@@ -43,9 +43,9 @@ Application::~Application()
 
 void Application::addTopLevelWidget(WidgetFactory factory)
 {
-	auto widget = factory();
+    auto widget = factory();
     widget->setAttribute(Qt::WA_DeleteOnClose);
-	qDebug() << "Created Widget with type:" << widget->metaObject()->className();
-	widget->show();
+    qDebug() << "Created Widget with type:" << widget->metaObject()->className();
+    widget->show();
 }
 

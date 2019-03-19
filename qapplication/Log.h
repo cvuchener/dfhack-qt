@@ -36,10 +36,10 @@ class Log: public QAbstractTableModel
 {
     Q_OBJECT
 public:
-	static void init();
-	static void shutdown();
+    static void init();
+    static void shutdown();
 
-	static void message(QtMsgType, const QMessageLogContext &, const QString &);
+    static void message(QtMsgType, const QMessageLogContext &, const QString &);
 
     static Log *model();
 
@@ -49,7 +49,7 @@ public:
     QVariant headerData(int section, Qt::Orientation orientation, int role = Qt::DisplayRole) const override;
 
 private:
-	static std::ofstream file;
+    static std::ofstream file;
     static std::unique_ptr<Log> instance;
 
     struct Message

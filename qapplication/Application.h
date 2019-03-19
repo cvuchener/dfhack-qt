@@ -30,13 +30,13 @@ namespace qapplication
 
 class Application: public QApplication
 {
-	Q_OBJECT
+    Q_OBJECT
 public:
-	Application(int &argc, char **argv);
-	~Application() override;
+    Application(int &argc, char **argv);
+    ~Application() override;
 
 public slots:
-	void addTopLevelWidget(WidgetFactory factory);
+    void addTopLevelWidget(WidgetFactory factory);
 };
 
 }

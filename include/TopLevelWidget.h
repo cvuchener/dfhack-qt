@@ -34,17 +34,17 @@ template<typename T>
 class SimpleWidgetFactory
 {
 public:
-	QWidget *operator() () const
-	{
-		return new T();
-	}
+    QWidget *operator() () const
+    {
+        return new T();
+    }
 };
 
 template<typename Callable>
 inline bool addTopLevelWidget(Callable &&widget_factory, DFHack::color_ostream *out = nullptr)
 {
-	if (auto app = QCoreApplication::instance()) {
-		if (QMetaObject::invokeMethod(app, "addTopLevelWidget", Qt::QueuedConnection,
+    if (auto app = QCoreApplication::instance()) {
+        if (QMetaObject::invokeMethod(app, "addTopLevelWidget", Qt::QueuedConnection,
                     Q_ARG(WidgetFactory, WidgetFactory(std::forward<Callable>(widget_factory))))) {
             return true;
         }
@@ -54,10 +54,10 @@ inline bool addTopLevelWidget(Callable &&widget_factory, DFHack::color_ostream *
             return false;
         }
     }
-	else {
+    else {
         if (out)
             out->printerr("QApplication not started\n");
-		return false;
+        return false;
     }
 }
 

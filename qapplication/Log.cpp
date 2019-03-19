@@ -24,16 +24,16 @@ using namespace qapplication;
 
 void Log::init()
 {
-	file.open("qt_log.txt");
+    file.open("qt_log.txt");
     instance.reset(new Log);
-	qInstallMessageHandler(message);
+    qInstallMessageHandler(message);
 }
 
 void Log::shutdown()
 {
     qInstallMessageHandler(nullptr);
     instance.reset();
-	file.close();
+    file.close();
 }
 
 static const char *msg_type_to_str(QtMsgType type)
@@ -57,16 +57,16 @@ static const char *msg_type_to_str(QtMsgType type)
 void Log::message(QtMsgType type, const QMessageLogContext &context, const QString &msg)
 {
     auto datetime = QDateTime::currentDateTime();
-	file << datetime.toString().toLocal8Bit().data();
-	file << " [" << msg_type_to_str(type) << "] " << msg.toLocal8Bit().data();
-	if (context.file) {
-		file << " (" << context.file << ":" << context.line;
-		if (context.function)
-			file << ", " << context.function;
-		file << ")";
-	}
-	file << std::endl;
-	file.flush();
+    file << datetime.toString().toLocal8Bit().data();
+    file << " [" << msg_type_to_str(type) << "] " << msg.toLocal8Bit().data();
+    if (context.file) {
+        file << " (" << context.file << ":" << context.line;
+        if (context.function)
+            file << ", " << context.function;
+        file << ")";
+    }
+    file << std::endl;
+    file.flush();
 
     if (instance) {
         auto &messages = instance->messages;
@@ -103,18 +103,18 @@ QVariant Log::data(const QModelIndex &index, int role) const
     case 1: // Type
         if (role == Qt::DisplayRole) {
             switch (msg.type) {
-            case QtDebugMsg:
-                return tr("Debug");
-            case QtInfoMsg:
-                return tr("Info");
-            case QtWarningMsg:
-                return tr("Warning");
-            case QtCriticalMsg:
-                return tr("Critical");
-            case QtFatalMsg:
-                return tr("Fatal");
-            default:
-                return tr("Other");
+                case QtDebugMsg:
+                    return tr("Debug");
+                case QtInfoMsg:
+                    return tr("Info");
+                case QtWarningMsg:
+                    return tr("Warning");
+                case QtCriticalMsg:
+                    return tr("Critical");
+                case QtFatalMsg:
+                    return tr("Fatal");
+                default:
+                    return tr("Other");
             }
         }
         else

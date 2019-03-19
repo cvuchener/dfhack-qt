@@ -1,14 +1,14 @@
 project(qapplication)
 
 set(QAPPLICATION_SOURCES
-	main.cpp
-	Application.cpp
+    main.cpp
+    Application.cpp
     Log.cpp
     LogWindow.cpp
 )
 
 qt5_wrap_cpp(QAPPLICATION_MOC_SOURCES
-	Application.h
+    Application.h
     Log.h
     LogWindow.h
 )

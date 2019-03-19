@@ -51,23 +51,23 @@ static std::vector<std::pair<QString, QString>> resources;
 class QtInfoBoxFactory
 {
 public:
-	QWidget *operator() () const
-	{
-		qDebug() << "Factory called";
-		auto message_box = new QMessageBox;
-		message_box->setWindowTitle("Qt Informations");
-		message_box->setInformativeText(QString("Qt Build Version: %1<br/>Qt Runtime Version: %2")
-				.arg(QT_VERSION_STR)
-				.arg(qVersion()));
-		message_box->addButton(QMessageBox::Close);
-		return message_box;
-	}
+    QWidget *operator() () const
+    {
+        qDebug() << "Factory called";
+        auto message_box = new QMessageBox;
+        message_box->setWindowTitle("Qt Informations");
+        message_box->setInformativeText(QString("Qt Build Version: %1<br/>Qt Runtime Version: %2")
+                .arg(QT_VERSION_STR)
+                .arg(qVersion()));
+        message_box->addButton(QMessageBox::Close);
+        return message_box;
+    }
 };
 
 static command_result info_cmd(color_ostream &out, std::vector<std::string> &parameters)
 {
-	qDebug() << "In qt_info";
-	return addTopLevelWidget(QtInfoBoxFactory(), &out) ? CR_OK : CR_FAILURE;
+    qDebug() << "In qt_info";
+    return addTopLevelWidget(QtInfoBoxFactory(), &out) ? CR_OK : CR_FAILURE;
 }
 
 static command_result log_cmd(color_ostream &out, std::vector<std::string> &parameters)
@@ -154,34 +154,39 @@ DFhackCExport command_result plugin_enable(color_ostream &out, bool enable)
 
 DFhackCExport command_result plugin_init(color_ostream &out, std::vector<PluginCommand> &commands)
 {
-    commands.push_back(PluginCommand("qt-info",
-                                     "Display a Qt dialog with Qt informations",
-                                     info_cmd,
-                                     false,
-                                     ""));
-    commands.push_back(PluginCommand("qt-log",
-                                     "Display a Qt dialog with Qt log messages",
-                                     log_cmd,
-                                     false,
-                                     ""));
-    commands.push_back(PluginCommand("qt-set-style",
-                                     "Set the style used by Qt widgets",
-                                     set_style,
-                                     false,
-                                     "qt-set-style <name>\n"
-                                     "It must be called before enabling qapplication."));
-    commands.push_back(PluginCommand("qt-set-icon-theme",
-                                     "Set the icon theme used by Qt widgets",
-                                     set_icon_theme,
-                                     false,
-                                     "qt-set-icon-them <name>\n"
-                                     "It must be called before enabling qapplication."));
-    commands.push_back(PluginCommand("qt-register-resource",
-                                     "Register the resource file to use with Qt Widgets",
-                                     register_resource,
-                                     false,
-                                     "qt-register-resource <rcc-filename> [mapped-root]\n"
-                                     "It must be called before enabling qapplication."));
+    commands.push_back(PluginCommand(
+                "qt-info",
+                "Display a Qt dialog with Qt informations",
+                info_cmd,
+                false,
+                ""));
+    commands.push_back(PluginCommand(
+                "qt-log",
+                "Display a Qt dialog with Qt log messages",
+                log_cmd,
+                false,
+                ""));
+    commands.push_back(PluginCommand(
+                "qt-set-style",
+                "Set the style used by Qt widgets",
+                set_style,
+                false,
+                "qt-set-style <name>\n"
+                "It must be called before enabling qapplication."));
+    commands.push_back(PluginCommand(
+                "qt-set-icon-theme",
+                "Set the icon theme used by Qt widgets",
+                set_icon_theme,
+                false,
+                "qt-set-icon-them <name>\n"
+                "It must be called before enabling qapplication."));
+    commands.push_back(PluginCommand(
+                "qt-register-resource",
+                "Register the resource file to use with Qt Widgets",
+                register_resource,
+                false,
+                "qt-register-resource <rcc-filename> [mapped-root]\n"
+                "It must be called before enabling qapplication."));
     return CR_OK;
 }
 
