@@ -19,7 +19,6 @@
  */
 
 #include <modules/Gui.h>
-#include <modules/Translation.h>
 #include <modules/Units.h>
 #include <modules/World.h>
 
@@ -31,14 +30,13 @@
 
 #include "UnitModel.h"
 
-#include "utils.h"
+#include <QtDebug>
 
 using namespace qtlabors;
 using namespace DFHack;
 
 UnitModel::UnitModel(QObject *parent)
     : QObject(parent)
-    , suspender(new CoreSuspender(std::defer_lock))
 {
 }
 
@@ -46,69 +44,71 @@ UnitModel::~UnitModel()
 {
 }
 
-const std::vector<Unit> &UnitModel::units() const
+std::vector<Unit>::const_iterator UnitModel::findUnit(int id) const
 {
-    return current_units;
+    auto it = std::lower_bound(current_units.begin(), current_units.end(), id, Unit::comp{});
+    if (it == current_units.end() || it->id != id)
+        return current_units.end();
+    else
+        return it;
 }
 
-
-void UnitModel::beginDataAccess()
+void UnitModel::refresh()
 {
-    suspender->lock();
+    CoreSuspender lock;
 
-    current_units.clear();
+    // Retrieve new unit list
+    std::vector<df::unit *> new_units;
     if (auto embark_viewscreen = Gui::getViewscreenByType<df::viewscreen_setupdwarfgamest>()) {
         mode = Mode::Embark;
-        for (auto unit: embark_viewscreen->units) {
-            current_units.push_back(Unit {
-                unit->id,
-                DF2QT(Translation::TranslateName(Units::getVisibleName(unit), false)),
-                unit
-            });
-        }
+        new_units = embark_viewscreen->units;
     }
     else if (World::isFortressMode()) {
         mode = Mode::Fortress;
         for (auto unit: df::global::world->units.active) {
             if (!Units::isCitizen(unit))
                 continue;
-            current_units.push_back(Unit {
-                unit->id,
-                DF2QT(Translation::TranslateName(Units::getVisibleName(unit), false)),
-                unit
-            });
+            new_units.push_back(unit);
         }
     }
-    else
+    else {
         mode = Mode::None;
-    std::sort(current_units.begin(), current_units.end());
-
-    emit unitListUpdated();
-}
-
-void UnitModel::endDataAccess()
-{
-    emit dataAccessDisabled();
-    suspender->unlock();
-}
-
-void UnitModel::clearUnitList()
-{
-    current_units.clear();
-    emit unitListUpdated();
-}
-
-void UnitModel::setLabor(int unit_id, df::enums::unit_labor::unit_labor labor, bool active)
-{
-    if (!suspender->owns_lock()) {
-        qCritical("Core not suspended.");
-        return;
     }
-    auto it = Unit::findById(current_units.begin(), current_units.end(), unit_id);
-    if (it == current_units.end()) {
-        qCritical("Unit ID %d not found.", unit_id);
-        return;
+    std::sort(new_units.begin(), new_units.end(),
+              [](const df::unit *lhs, const df::unit *rhs){return lhs->id < rhs->id;});
+
+    // Merge unit vectors
+    auto old_it = current_units.begin();
+    for (const auto &new_unit: new_units) {
+        while (old_it != current_units.end() && old_it->id < new_unit->id) {
+            int index = std::distance(current_units.begin(), old_it);
+            emit unitAboutToBeRemoved(index);
+            qDebug() << "remove" << index << old_it->id;
+            old_it = current_units.erase(old_it);
+            emit unitRemoved(index);
+        }
+        if (old_it != current_units.end() && old_it->id == new_unit->id) {
+            int index = std::distance(current_units.begin(), old_it);
+            qDebug() << "refresh" << index << old_it->id;
+            old_it->refresh(new_unit);
+            emit unitRefreshed(index);
+            ++old_it;
+        }
+        else {
+            int index = std::distance(current_units.begin(), old_it);
+            emit unitAboutToBeInserted(index);
+            qDebug() << "insert" << index << new_unit->id;
+            old_it = current_units.emplace(old_it, new_unit);
+            ++old_it;
+            emit unitInserted(index);
+        }
     }
-    it->ptr->status.labors[labor] = active;
-    emit laborChanged(unit_id, labor, active);
+    while (old_it != current_units.end()) {
+        int index = std::distance(current_units.begin(), old_it);
+        emit unitAboutToBeRemoved(index);
+        qDebug() << "remove" << index << old_it->id;
+        old_it = current_units.erase(old_it);
+        emit unitRemoved(index);
+    }
 }
+

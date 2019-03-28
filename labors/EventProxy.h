@@ -38,6 +38,7 @@ signals:
     void mapUnloaded();
     void embarkScreenOpened();
     void embarkScreenClosed();
+    void gamePaused();
 };
 
 }

@@ -21,7 +21,14 @@
 #ifndef QT_LABORS_UNIT_H
 #define QT_LABORS_UNIT_H
 
-namespace df { class unit; }
+#include <DataDefs.h>
+#include <df/unit_skill.h>
+
+#include <QString>
+
+#include <array>
+
+namespace df { struct unit; }
 
 namespace qtlabors
 {
@@ -30,21 +37,30 @@ struct Unit
 {
     int id;
     QString name;
-    df::unit *ptr;
+    std::vector<df::unit_skill> skills;
+    std::array<bool, 94> labors;
+
+    Unit(df::unit *);
+
+    void refresh(df::unit *);
+
+    // nullptr if not found
+    const df::unit_skill *findSkill(df::enums::job_skill::job_skill skill) const;
 
     inline bool operator<(const Unit &other) const { return id < other.id; }
+
+    struct comp {
+        inline bool operator() (const Unit &unit, int unit_id) const {
+            return unit.id < unit_id;
+        }
+        inline bool operator() (int unit_id, const Unit &unit) const {
+            return unit_id < unit.id;
+        }
+    };
 
     template<typename Iterator>
     static Iterator findById(Iterator first, Iterator last, int unit_id)
     {
-        struct comp {
-            inline bool operator() (const Unit &unit, int unit_id) const {
-                return unit.id < unit_id;
-            }
-            inline bool operator() (int unit_id, const Unit &unit) const {
-                return unit_id < unit.id;
-            }
-        };
         auto it = std::lower_bound(first, last, unit_id, comp{});
         if (it != last && it->id == unit_id)
             return it;

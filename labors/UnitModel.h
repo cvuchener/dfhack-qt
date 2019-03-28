@@ -21,14 +21,9 @@
 #ifndef QT_LABORS_UNIT_MODEL_H
 #define QT_LABORS_UNIT_MODEL_H
 
-#include "DataDefs.h"
-#include "df/unit_labor.h"
-
 #include <QObject>
 
 #include "Unit.h"
-
-namespace DFHack { class CoreSuspender; }
 
 namespace qtlabors
 {
@@ -40,31 +35,27 @@ public:
     explicit UnitModel(QObject *parent = nullptr);
     ~UnitModel() override;
 
-    const std::vector<Unit> &units() const; // sorted by id
+    inline const std::vector<Unit> &units() const { return current_units; }; // sorted by id
+    std::vector<Unit>::const_iterator findUnit(int id) const; // end if not found
 
     enum class Mode {
         None,
         Embark,
         Fortress,
     };
-
     inline Mode getMode() const { return mode; }
 
 public slots:
-    void beginDataAccess();
-    void endDataAccess();
-    void clearUnitList();
-
-    void setLabor(int unit_id, df::enums::unit_labor::unit_labor labor, bool active);
+    void refresh();
 
 signals:
-    void unitListUpdated();
-    void dataAccessDisabled();
-
-    void laborChanged(int unit_id, df::enums::unit_labor::unit_labor labor, bool active);
+    void unitAboutToBeInserted(int index);
+    void unitInserted(int index);
+    void unitAboutToBeRemoved(int index);
+    void unitRemoved(int index);
+    void unitRefreshed(int index);
 
 private:
-    std::unique_ptr<DFHack::CoreSuspender> suspender;
     std::vector<Unit> current_units;
     Mode mode;
 };

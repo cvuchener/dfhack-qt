@@ -23,14 +23,12 @@
 
 #include <QMainWindow>
 
-#include <Core.h>
-
 #include <QSortFilterProxyModel>
 
 #include <memory>
-#include <utility>
 
 #include "UnitModel.h"
+#include "ChangesModel.h"
 
 namespace qtlabors
 {
@@ -47,16 +45,18 @@ public:
     ~MainWindow() override;
 
 private slots:
-    void on_suspend_action_triggered();
-    void on_resume_action_triggered();
+    void on_refresh_action_triggered();
+    void on_apply_changes_action_triggered();
+    void on_clear_changes_action_triggered();
+    void on_remove_change_button_clicked();
 
-    void updateUnitModel();
-    void clearUnitModel();
+    void changeSelectionChanged(const QItemSelection &selected, const QItemSelection &deselected);
 
 private:
     std::unique_ptr<Ui::MainWindow> ui;
     std::shared_ptr<EventProxy> event_proxy;
     UnitModel model;
+    ChangesModel changes;
     struct gridview;
     std::vector<std::unique_ptr<gridview>> gridviews;
 };

@@ -95,6 +95,8 @@ DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_chan
         }
         break;
     }
+    case SC_PAUSED:
+        proxy->gamePaused();
     default:
         break;
     }

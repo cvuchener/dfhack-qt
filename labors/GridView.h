@@ -25,21 +25,20 @@
 
 #include <memory>
 
-#include "Unit.h"
-
 class QSettings;
 
 namespace qtlabors
 {
 
 class UnitModel;
+class ChangesModel;
 class ViewColumn;
 
 class GridView: public QAbstractItemModel
 {
     Q_OBJECT
 public:
-    explicit GridView(QSettings &settings, UnitModel *model, QObject *parent = nullptr);
+    explicit GridView(QSettings &settings, const UnitModel *model, ChangesModel *changes, QObject *parent = nullptr);
     ~GridView() override;
 
     // Model implementation
@@ -52,14 +51,9 @@ public:
     Qt::ItemFlags flags(const QModelIndex &index) const override;
     QVariant headerData(int section, Qt::Orientation orientation, int role = Qt::DisplayRole) const override;
 
-public slots:
-    void updateUnits();
-    void disableData();
-
 private:
-    UnitModel *model;
-    bool enabled;
-    std::vector<Unit> units;
+    const UnitModel *model;
+    ChangesModel *changes;
     std::vector<std::unique_ptr<ViewColumn>> columns;
 };
 

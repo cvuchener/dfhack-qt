@@ -18,10 +18,6 @@
  *
  */
 
-#include <modules/Units.h>
-
-#include "df/unit.h"
-
 #include <QSettings>
 
 #include "GridView.h"
@@ -29,16 +25,15 @@
 #include "LaborColumn.h"
 #include "SkillColumn.h"
 #include "UnitModel.h"
-#include "utils.h"
 
 #include <QtDebug>
 
 using namespace qtlabors;
 
-GridView::GridView(QSettings &settings, UnitModel *model, QObject *parent)
+GridView::GridView(QSettings &settings, const UnitModel *m, ChangesModel *c, QObject *parent)
     : QAbstractItemModel(parent)
-    , model(model)
-    , enabled(false)
+    , model(m)
+    , changes(c)
 {
     int set_count = settings.beginReadArray("sets");
     for (int i = 0; i < set_count; ++i) {
@@ -50,7 +45,7 @@ GridView::GridView(QSettings &settings, UnitModel *model, QObject *parent)
             auto type = settings.value("type").toString();
             ViewColumn *col = nullptr;
             if (type == "LABOR") {
-                col = new LaborColumn(settings, model, color);
+                col = new LaborColumn(settings, changes, color);
             }
             else if (type == "SKILL") {
                 col = new SkillColumn(settings, color);
@@ -63,9 +58,9 @@ GridView::GridView(QSettings &settings, UnitModel *model, QObject *parent)
                 int col_index = columns.size();
                 connect(col, &ViewColumn::dataChanged,
                         [this, col_index] (int unit_id) {
-                            auto it = Unit::findById(units.begin(), units.end(), unit_id);
-                            if (it != units.end()) {
-                                auto index = createIndex(std::distance(units.begin(), it), col_index);
+                            auto it = model->findUnit(unit_id);
+                            if (it != model->units().end()) {
+                                auto index = createIndex(std::distance(model->units().begin(), it), col_index);
                                 emit dataChanged(index, index);
                             }
                         });
@@ -75,8 +70,16 @@ GridView::GridView(QSettings &settings, UnitModel *model, QObject *parent)
     }
     settings.endArray();
 
-    connect(model, &UnitModel::unitListUpdated, this, &GridView::updateUnits);
-    connect(model, &UnitModel::dataAccessDisabled, this, &GridView::disableData);
+    connect(model, &UnitModel::unitAboutToBeInserted,
+            [this](int row){ beginInsertRows({}, row, row); });
+    connect(model, &UnitModel::unitInserted,
+            [this](int row){ endInsertRows(); });
+    connect(model, &UnitModel::unitAboutToBeRemoved,
+            [this](int row){ beginRemoveRows({}, row, row); });
+    connect(model, &UnitModel::unitRemoved,
+            [this](int row){ endRemoveRows(); });
+    connect(model, &UnitModel::unitRefreshed,
+            [this](int row){ emit dataChanged(index(row, 0), index(row, columns.size())); });
 }
 
 GridView::~GridView()
@@ -98,7 +101,7 @@ int GridView::rowCount(const QModelIndex &parent) const
     if (parent.isValid())
         return 0;
     else
-        return units.size();
+        return model->units().size();
 }
 
 int GridView::columnCount(const QModelIndex &parent) const
@@ -111,7 +114,7 @@ int GridView::columnCount(const QModelIndex &parent) const
 
 QVariant GridView::data(const QModelIndex &index, int role) const
 {
-    const auto &unit = units[index.row()];
+    const auto &unit = model->units()[index.row()];
     if (index.column() == 0) {
         switch (role) {
         case Qt::DisplayRole:
@@ -120,7 +123,7 @@ QVariant GridView::data(const QModelIndex &index, int role) const
             return QVariant();
         }
     }
-    else if (enabled) {
+    else {
         return columns[index.column()-1]->data(unit, role);
     }
     return QVariant();
@@ -128,11 +131,11 @@ QVariant GridView::data(const QModelIndex &index, int role) const
 
 bool GridView::setData(const QModelIndex &index, const QVariant &value, int role)
 {
-    const auto &unit = units[index.row()];
+    const auto &unit = model->units()[index.row()];
     if (index.column() == 0) {
         return false;
     }
-    else if (enabled) {
+    else {
         return columns[index.column()-1]->setData(unit, value, role);
     }
     return false;
@@ -140,11 +143,11 @@ bool GridView::setData(const QModelIndex &index, const QVariant &value, int role
 
 Qt::ItemFlags GridView::flags(const QModelIndex &index) const
 {
-    const auto &unit = units[index.row()];
+    const auto &unit = model->units()[index.row()];
     if (index.column() == 0) {
         return Qt::ItemIsSelectable | Qt::ItemIsEnabled | Qt::ItemNeverHasChildren;
     }
-    else if (enabled) {
+    else {
         return columns[index.column()-1]->flags(unit);
     }
     return Qt::NoItemFlags;
@@ -161,47 +164,3 @@ QVariant GridView::headerData(int section, Qt::Orientation orientation, int role
         return columns[section-1]->headerData(role);
 }
 
-void GridView::updateUnits()
-{
-    auto old_it = units.begin();
-    for (const auto &new_unit: model->units()) {
-        while (old_it != units.end() && old_it->id < new_unit.id) {
-            int row = std::distance(units.begin(), old_it);
-            beginRemoveRows(QModelIndex(), row, row);
-            qDebug() << "remove" << row << old_it->id;
-            old_it = units.erase(old_it);
-            endRemoveRows();
-        }
-        if (old_it != units.end() && old_it->id == new_unit.id) {
-            qDebug() << "refresh" << std::distance(units.begin(), old_it) << old_it->id;
-            *old_it = new_unit;
-            ++old_it;
-        }
-        else {
-            int row = std::distance(units.begin(), old_it);
-            beginInsertRows(QModelIndex(), row, row);
-            qDebug() << "insert" << row << new_unit.id;
-            old_it = units.insert(old_it, new_unit);
-            ++old_it;
-            endInsertRows();
-        }
-    }
-    if (old_it != units.end()) {
-        int first = std::distance(units.begin(), old_it);
-        int last = units.size()-1;
-        beginRemoveRows(QModelIndex(), first, last);
-        qDebug() << "remove rows" << first << last << old_it->id;
-        units.erase(old_it, units.end());
-        endRemoveRows();
-    }
-
-    // Update all data
-    enabled = true;
-    emit dataChanged(index(0, 0), index(units.size()-1, columns.size()));
-}
-
-void GridView::disableData()
-{
-    enabled = false;
-    emit dataChanged(index(0, 0), index(units.size()-1, columns.size()));
-}

@@ -26,9 +26,13 @@
 
 #include <QSettings>
 
-#include "UnitModel.h"
+#include "ChangesModel.h"
+#include "Unit.h"
 
 #include "utils.h"
+#include "globals.h"
+
+#include <QtDebug>
 
 using namespace qtlabors;
 using namespace df::enums;
@@ -36,11 +40,11 @@ using namespace df::enums;
 using labor_traits = df::enum_traits<unit_labor::unit_labor>;
 using skill_traits = df::enum_traits<job_skill::job_skill>;
 
-LaborColumn::LaborColumn(QSettings &settings, UnitModel *model, const QColor &color)
+LaborColumn::LaborColumn(QSettings &settings, ChangesModel *changes, const QColor &color)
     : ViewColumn(settings.value("name").toString(), color)
     , labor(static_cast<labor_traits::enum_type>(settings.value("labor_id").toInt()))
     , skill(job_skill::NONE)
-    , model(model)
+    , changes(changes)
 {
     for (skill_traits::base_type i = 0; i <= skill_traits::last_item_value; ++i) {
         auto s = static_cast<job_skill::job_skill>(i);
@@ -50,7 +54,7 @@ LaborColumn::LaborColumn(QSettings &settings, UnitModel *model, const QColor &co
         }
     }
 
-    connect(model, &UnitModel::laborChanged,
+    connect(changes, &ChangesModel::unitLaborChanged,
             [this] (int unit_id, unit_labor::unit_labor labor) {
                 if (labor == this->labor)
                     emit dataChanged(unit_id);
@@ -63,17 +67,21 @@ LaborColumn::~LaborColumn()
 
 QVariant LaborColumn::data(const Unit &unit, int role) const
 {
+    auto changed = changes->unitLabor(unit.id, labor);
+    bool activated = changed.first ? changed.second : unit.labors[labor];
     switch (role) {
     case Qt::DisplayRole:
         if (skill != job_skill::NONE) {
-            if (auto soul = unit.ptr->status.current_soul) {
-                auto s = binsearch_in_vector(soul->skills, &df::unit_skill::id, skill);
-                return QString("%1").arg(s ? s->rating : 0);
-            }
+            if (auto s = unit.findSkill(skill))
+                return s->rating;
+            else
+                return 0;
         }
         return QVariant();
     case Qt::CheckStateRole:
-        return unit.ptr->status.labors[labor] ? Qt::Checked : Qt::Unchecked;
+        return activated ? Qt::Checked : Qt::Unchecked;
+    case ChangedRole:
+        return changed.first;
     default:
         return ViewColumn::data(unit, role);
     }
@@ -82,7 +90,11 @@ QVariant LaborColumn::data(const Unit &unit, int role) const
 bool LaborColumn::setData(const Unit &unit, const QVariant &value, int role)
 {
     if (role == Qt::CheckStateRole && value.canConvert<Qt::CheckState>()) {
-        model->setLabor(unit.id, labor, value.value<Qt::CheckState>() == Qt::Checked);
+        auto activated = value.value<Qt::CheckState>() == Qt::Checked;
+        if (activated != unit.labors[labor])
+            changes->changeUnitLabor(unit.id, labor, activated);
+        else
+            changes->resetUnitLabor(unit.id, labor);
         return true;
     }
     else

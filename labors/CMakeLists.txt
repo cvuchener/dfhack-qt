@@ -2,6 +2,7 @@ project(qtlabors)
 
 set(QTLABORS_SOURCES
     main.cpp
+    ChangesModel.cpp
     color.cpp
     EventProxy.cpp
     GridView.cpp
@@ -10,11 +11,13 @@ set(QTLABORS_SOURCES
     LaborColumn.cpp
     MainWindow.cpp
     SkillColumn.cpp
+    Unit.cpp
     UnitModel.cpp
     ViewColumn.cpp
 )
 
 qt5_wrap_cpp(QTLABORS_MOC_SOURCES
+    ChangesModel.h
     EventProxy.h
     GridView.h
     GridViewDelegate.h

@@ -18,36 +18,13 @@
  *
  */
 
-#ifndef QT_LABORS_LABOR_COLUMN_H
-#define QT_LABORS_LABOR_COLUMN_H
+#ifndef QT_LABORS_GLOBALS_H
+#define QT_LABORS_GLOBALS_H
 
-#include "DataDefs.h"
-#include "df/unit_labor.h"
-#include "df/job_skill.h"
+namespace qtlabors {
 
-#include "ViewColumn.h"
-
-class QSettings;
-
-namespace qtlabors
-{
-
-class ChangesModel;
-
-class LaborColumn: public ViewColumn
-{
-public:
-    LaborColumn(QSettings &settings, ChangesModel *changes, const QColor &color);
-    ~LaborColumn() override;
-
-    QVariant data(const Unit &unit, int role = Qt::DisplayRole) const override;
-    bool setData(const Unit &unit, const QVariant &value, int role = Qt::EditRole) override;
-    Qt::ItemFlags flags(const Unit &unit) const override;
-
-private:
-    df::enums::unit_labor::unit_labor labor;
-    df::enums::job_skill::job_skill skill;
-    ChangesModel *changes;
+enum ItemDataRole {
+    ChangedRole = Qt::UserRole,
 };
 
 }

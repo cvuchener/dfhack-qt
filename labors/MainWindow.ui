@@ -58,11 +58,17 @@
      <height>27</height>
     </rect>
    </property>
+   <widget class="QMenu" name="window_menu">
+    <property name="title">
+     <string>&amp;Window</string>
+    </property>
+   </widget>
+   <addaction name="window_menu"/>
   </widget>
   <widget class="QStatusBar" name="status_bar"/>
   <widget class="QToolBar" name="tool_bar">
    <property name="windowTitle">
-    <string>toolBar</string>
+    <string>Tool bar</string>
    </property>
    <property name="toolButtonStyle">
     <enum>Qt::ToolButtonTextUnderIcon</enum>
@@ -73,31 +79,74 @@
    <attribute name="toolBarBreak">
     <bool>false</bool>
    </attribute>
-   <addaction name="suspend_action"/>
-   <addaction name="resume_action"/>
+   <addaction name="refresh_action"/>
+   <addaction name="apply_changes_action"/>
+   <addaction name="clear_changes_action"/>
   </widget>
-  <action name="suspend_action">
+  <widget class="QDockWidget" name="changes_dock">
+   <property name="windowTitle">
+    <string>Changes</string>
+   </property>
+   <attribute name="dockWidgetArea">
+    <number>1</number>
+   </attribute>
+   <widget class="QWidget" name="changes_dock_content">
+    <layout class="QVBoxLayout" name="verticalLayout_2">
+     <item>
+      <widget class="QTreeView" name="changes_view">
+       <attribute name="headerVisible">
+        <bool>false</bool>
+       </attribute>
+      </widget>
+     </item>
+     <item>
+      <layout class="QHBoxLayout" name="horizontalLayout_2">
+       <item>
+        <widget class="QPushButton" name="remove_change_button">
+         <property name="text">
+          <string>Remove</string>
+         </property>
+         <property name="icon">
+          <iconset theme="edit-delete"/>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </item>
+    </layout>
+   </widget>
+  </widget>
+  <action name="refresh_action">
    <property name="icon">
-    <iconset theme="media-playback-pause">
+    <iconset theme="view-refresh">
      <normaloff>.</normaloff>.</iconset>
    </property>
    <property name="text">
-    <string>Suspend</string>
+    <string>Refresh</string>
    </property>
-   <property name="toolTip">
-    <string>Suspend DF so data can be accessed</string>
+   <property name="shortcut">
+    <string>Ctrl+R</string>
    </property>
   </action>
-  <action name="resume_action">
+  <action name="apply_changes_action">
    <property name="icon">
-    <iconset theme="media-playback-start">
+    <iconset theme="document-save">
      <normaloff>.</normaloff>.</iconset>
    </property>
    <property name="text">
-    <string>Resume</string>
+    <string>Apply changes</string>
    </property>
-   <property name="toolTip">
-    <string>Resume DF</string>
+   <property name="shortcut">
+    <string>Ctrl+S</string>
+   </property>
+  </action>
+  <action name="clear_changes_action">
+   <property name="icon">
+    <iconset theme="document-revert">
+     <normaloff>.</normaloff>.</iconset>
+   </property>
+   <property name="text">
+    <string>Clear changes</string>
    </property>
   </action>
  </widget>

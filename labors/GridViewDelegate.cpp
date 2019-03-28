@@ -25,6 +25,7 @@
 #include <QPainter>
 
 #include "color.h"
+#include "globals.h"
 
 #include <QtDebug>
 
@@ -87,6 +88,12 @@ void GridViewDelegate::paint(QPainter *painter, const QStyleOptionViewItem &opti
         painter->drawText(option.rect,
                           Qt::AlignHCenter | Qt::AlignVCenter,
                           index.data(Qt::DisplayRole).toString());
+        painter->restore();
+    }
+    if (index.data(ChangedRole).toBool()) {
+        painter->save();
+        painter->setPen(QPen(Qt::red, 2));
+        painter->drawRect(option.rect.adjusted(1, 1, -2, -2));
         painter->restore();
     }
 }

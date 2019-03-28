@@ -21,8 +21,6 @@
 #include "MainWindow.h"
 #include "ui_MainWindow.h"
 
-#include <Core.h>
-
 #include <QSettings>
 #include <QTreeView>
 
@@ -50,17 +48,22 @@ MainWindow::MainWindow(std::shared_ptr<EventProxy> &&proxy, QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::MainWindow)
     , event_proxy(std::move(proxy))
+    , changes(&model)
 {
     ui->setupUi(this);
 
-    updateUnitModel();
+    ui->window_menu->addAction(ui->changes_dock->toggleViewAction());
+    ui->window_menu->addSeparator();
+    ui->window_menu->addAction(ui->tool_bar->toggleViewAction());
+
+    model.refresh();
 
     QSettings gridview_settings("default_gridviews.dtg", QSettings::IniFormat);
     int gridview_count = gridview_settings.beginReadArray("gridviews");
     gridviews.reserve(gridview_count);
     for (int i = 0; i < gridview_count; ++i) {
         gridview_settings.setArrayIndex(i);
-        gridviews.emplace_back(new gridview(in_place, gridview_settings, &model));
+        gridviews.emplace_back(new gridview(in_place, gridview_settings, &model, &changes));
         auto gv = gridviews.back().get();
 
         connect(ui->filter_edit, &QLineEdit::textChanged,
@@ -81,59 +84,64 @@ MainWindow::MainWindow(std::shared_ptr<EventProxy> &&proxy, QWidget *parent)
     }
     gridview_settings.endArray();
 
+    ui->changes_view->setModel(&changes);
+    ui->remove_change_button->setEnabled(false);
+    connect(ui->changes_view->selectionModel(), &QItemSelectionModel::selectionChanged,
+            this, &MainWindow::changeSelectionChanged);
+
     connect(event_proxy.get(), &EventProxy::mapLoaded,
-            this, &MainWindow::updateUnitModel);
-    connect(event_proxy.get(), &EventProxy::mapUnloaded,
-            this, &MainWindow::clearUnitModel);
+            this, &MainWindow::on_refresh_action_triggered);
+    connect(event_proxy.get(), &EventProxy::gamePaused,
+            this, &MainWindow::on_refresh_action_triggered);
     connect(event_proxy.get(), &EventProxy::embarkScreenOpened,
-            this, &MainWindow::updateUnitModel);
+            this, &MainWindow::on_refresh_action_triggered);
     connect(event_proxy.get(), &EventProxy::embarkScreenClosed,
-            this, &MainWindow::updateUnitModel);
+            this, &MainWindow::on_refresh_action_triggered);
+
 }
 
 MainWindow::~MainWindow()
 {
 }
 
-void MainWindow::on_suspend_action_triggered()
+void MainWindow::on_refresh_action_triggered()
 {
-    ui->suspend_action->setEnabled(false);
-    model.beginDataAccess();
-    ui->resume_action->setEnabled(true);
-}
-
-void MainWindow::on_resume_action_triggered()
-{
-    ui->resume_action->setEnabled(false);
-    model.endDataAccess();
-    ui->suspend_action->setEnabled(true);
-}
-
-void MainWindow::updateUnitModel()
-{
-    model.beginDataAccess();
-    model.endDataAccess();
+    model.refresh();
     switch (model.getMode()) {
     case UnitModel::Mode::None:
         setWindowTitle(tr("Labors — No game loaded"));
-        ui->suspend_action->setEnabled(false);
         break;
     case UnitModel::Mode::Embark:
         setWindowTitle(tr("Labors — Embark"));
-        ui->suspend_action->setEnabled(true);
         break;
     case UnitModel::Mode::Fortress:
         setWindowTitle(tr("Labors — Fortress"));
-        ui->suspend_action->setEnabled(true);
         break;
     }
-    ui->resume_action->setEnabled(false);
 }
 
-void MainWindow::clearUnitModel()
+void MainWindow::on_apply_changes_action_triggered()
 {
-    model.clearUnitList();
-    setWindowTitle(tr("Labors — No game loaded"));
-    ui->suspend_action->setEnabled(false);
-    ui->resume_action->setEnabled(false);
+    changes.apply();
+    model.refresh();
+}
+
+void MainWindow::on_clear_changes_action_triggered()
+{
+    changes.reset();
+    model.refresh();
+}
+
+void MainWindow::on_remove_change_button_clicked()
+{
+    auto selection = ui->changes_view->selectionModel();
+    // removing rows invalidate indices, only one can be removed
+    auto row = selection->selectedRows().first();
+    changes.removeRow(row.row(), row.parent());
+}
+
+void MainWindow::changeSelectionChanged(const QItemSelection &, const QItemSelection &)
+{
+    if (auto selection = qobject_cast<const QItemSelectionModel *>(QObject::sender()))
+        ui->remove_change_button->setEnabled(selection->hasSelection());
 }

@@ -37,7 +37,7 @@ using skill_traits = df::enum_traits<job_skill::job_skill>;
 
 SkillColumn::SkillColumn(QSettings &settings, const QColor &color)
     : ViewColumn(settings.value("name").toString(), color)
-    , skill(static_cast<skill_traits::enum_type>(settings.value("skill_id").toInt()-1))
+    , skill(static_cast<job_skill::job_skill>(settings.value("skill_id").toInt()))
 {
 }
 
@@ -50,10 +50,10 @@ QVariant SkillColumn::data(const Unit &unit, int role) const
     switch (role) {
     case Qt::DisplayRole:
         if (skill != job_skill::NONE) {
-            if (auto soul = unit.ptr->status.current_soul) {
-                auto s = binsearch_in_vector(soul->skills, &df::unit_skill::id, skill);
-                return QString("%1").arg(s ? s->rating : 0);
-            }
+            if (auto s = unit.findSkill(skill))
+                return s->rating;
+            else
+                return 0;
         }
         return QVariant();
     default:
