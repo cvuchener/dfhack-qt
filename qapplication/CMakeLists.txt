@@ -4,12 +4,14 @@ set(QAPPLICATION_SOURCES
     main.cpp
     Application.cpp
     Log.cpp
+    LogFilterProxyModel.cpp
     LogWindow.cpp
 )
 
 qt5_wrap_cpp(QAPPLICATION_MOC_SOURCES
     Application.h
     Log.h
+    LogFilterProxyModel.h
     LogWindow.h
 )
 

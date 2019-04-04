@@ -48,6 +48,13 @@ public:
     QVariant data(const QModelIndex &index, int role = Qt::DisplayRole) const override;
     QVariant headerData(int section, Qt::Orientation orientation, int role = Qt::DisplayRole) const override;
 
+    enum Column {
+        DateColumn = 0,
+        TypeColumn,
+        MessageColumn,
+        LocationColumn,
+    };
+
 private:
     static std::ofstream file;
     static std::unique_ptr<Log> instance;

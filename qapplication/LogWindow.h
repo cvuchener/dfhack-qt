@@ -25,6 +25,8 @@
 
 #include <memory>
 
+#include "LogFilterProxyModel.h"
+
 namespace qapplication
 {
 
@@ -37,8 +39,15 @@ public:
     explicit LogWindow(QWidget *parent = nullptr);
     ~LogWindow() override;
 
+public slots:
+    void on_filter_column_currentIndexChanged(int index);
+    void on_filter_case_sensitive_stateChanged(int state);
+
+    void updateSearchFilter();
+
 private:
     std::unique_ptr<Ui::LogWindow> ui;
+    LogFilterProxyModel filter;
 };
 
 }

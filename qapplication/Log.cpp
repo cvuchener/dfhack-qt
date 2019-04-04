@@ -95,12 +95,12 @@ QVariant Log::data(const QModelIndex &index, int role) const
 {
     const auto &msg = messages[index.row()];
     switch (index.column()) {
-    case 0: // When
+    case DateColumn:
         if (role == Qt::DisplayRole)
             return msg.datetime;
         else
             return QVariant();
-    case 1: // Type
+    case TypeColumn:
         if (role == Qt::DisplayRole) {
             switch (msg.type) {
                 case QtDebugMsg:
@@ -117,14 +117,16 @@ QVariant Log::data(const QModelIndex &index, int role) const
                     return tr("Other");
             }
         }
+        else if (role == Qt::UserRole)
+            return msg.type;
         else
             return QVariant();
-    case 2: // Message
+    case MessageColumn:
         if (role == Qt::DisplayRole)
             return msg.msg;
         else
             return QVariant();
-    case 3: // Location
+    case LocationColumn:
         if (role == Qt::DisplayRole)
             return msg.location;
         else
@@ -138,13 +140,13 @@ QVariant Log::headerData(int section, Qt::Orientation orientation, int role) con
 {
     if (orientation == Qt::Horizontal && role == Qt::DisplayRole) {
         switch (section) {
-        case 0:
+        case DateColumn:
             return tr("Date");
-        case 1:
+        case TypeColumn:
             return tr("Type");
-        case 2:
+        case MessageColumn:
             return tr("Message");
-        case 3:
+        case LocationColumn:
             return tr("Location");
         default:
             return QVariant();
