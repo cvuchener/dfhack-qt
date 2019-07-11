@@ -21,5 +21,5 @@ qt5_wrap_ui(QAPPLICATION_UI_SOURCES
 
 DFHACK_PLUGIN(qapplication
     ${QAPPLICATION_SOURCES} ${QAPPLICATION_MOC_SOURCES} ${QAPPLICATION_UI_SOURCES}
-    LINK_LIBRARIES Qt5::Core Qt5::Widgets dfhack-tinythread)
+    LINK_LIBRARIES Qt5::Core Qt5::Widgets dfhack-qt-common dfhack-tinythread)
 target_include_directories(qapplication PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
