@@ -43,9 +43,13 @@ Application::~Application()
 
 void Application::addTopLevelWidget(WidgetFactory factory)
 {
-    auto widget = factory();
-    widget->setAttribute(Qt::WA_DeleteOnClose);
-    qDebug() << "Created Widget with type:" << widget->metaObject()->className();
-    widget->show();
+    if (auto widget = factory()) {
+        widget->setAttribute(Qt::WA_DeleteOnClose);
+        qDebug() << "Created Widget with type:" << widget->metaObject()->className();
+        widget->show();
+    }
+    else {
+        qCritical() << "Factory returned null pointer";
+    }
 }
 
