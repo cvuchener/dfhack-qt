@@ -48,12 +48,9 @@ static QString icon_theme_name;
 static std::vector<std::pair<QString, QString>> resources;
 
 // Commands
-class QtInfoBoxFactory
+static command_result info_cmd(color_ostream &out, std::vector<std::string> &parameters)
 {
-public:
-    QWidget *operator() () const
-    {
-        qDebug() << "Factory called";
+    return addTopLevelWidget([](){
         auto message_box = new QMessageBox;
         message_box->setWindowTitle("Qt Informations");
         message_box->setInformativeText(QString("Qt Build Version: %1<br/>Qt Runtime Version: %2")
@@ -61,13 +58,7 @@ public:
                 .arg(qVersion()));
         message_box->addButton(QMessageBox::Close);
         return message_box;
-    }
-};
-
-static command_result info_cmd(color_ostream &out, std::vector<std::string> &parameters)
-{
-    qDebug() << "In qt_info";
-    return addTopLevelWidget(QtInfoBoxFactory(), &out) ? CR_OK : CR_FAILURE;
+    }, &out) ? CR_OK : CR_FAILURE;
 }
 
 static command_result log_cmd(color_ostream &out, std::vector<std::string> &parameters)
