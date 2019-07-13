@@ -1,0 +1,40 @@
+dist: xenial
+sudo: false
+language: cpp
+matrix:
+  include:
+    - os: linux
+      language: generic
+      compiler: gcc
+      addons:
+        apt:
+          sources:
+            - sourceline: 'ppa:beineri/opt-qt597-xenial'
+          packages:
+            - g++
+            - cmake
+            - ninja-build
+            - zlib1g-dev 
+            - libsdl1.2-dev
+            - libxml-libxml-perl
+            - libxml-libxslt-perl
+            - qt59base
+      env:
+        - QT_PREFIX=/opt/qt59
+env:
+  global:
+    - PLUGINS=qapplication
+    - DFHACK_VERSION=0.44.12-r2
+    - DFHACK_DIR=$HOME/dfhack
+before_install:
+  - git clone "https://github.com/DFHack/dfhack.git" "$DFHACK_DIR"
+  - cd "$DFHACK_DIR"
+  - git checkout "$DFHACK_VERSION"
+  - git submodule update --init
+  - ln -s "$TRAVIS_BUILD_DIR" "$DFHACK_DIR/plugins/qt"
+  - echo "add_subdirectory(qt)" > "$DFHACK_DIR/plugins/CMakeLists.custom.txt"
+script:
+  - mkdir "$DFHACK_DIR/builddir"
+  - cd "$DFHACK_DIR/builddir"
+  - cmake .. -G Ninja -DCMAKE_PREFIX_PATH="$QT_PREFIX"
+  - for plugin in $PLUGINS; do ninja -j 2 $plugin; done
