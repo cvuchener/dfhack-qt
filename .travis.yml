@@ -8,8 +8,25 @@ matrix:
       compiler: gcc
       addons:
         apt:
+          packages:
+            - g++
+            - cmake
+            - ninja-build
+            - zlib1g-dev
+            - libsdl1.2-dev
+            - libxml-libxml-perl
+            - libxml-libxslt-perl
+            - qtbase5-dev
+            - qtbase5-dev-tools
+      env:
+        - QT_PREFIX=/usr/lib/x86_64-linux-gnu/qt5
+    - os: linux
+      language: generic
+      compiler: gcc
+      addons:
+        apt:
           sources:
-            - sourceline: 'ppa:beineri/opt-qt597-xenial'
+            - sourceline: 'ppa:beineri/opt-qt-5.12.3-xenial'
           packages:
             - g++
             - cmake
@@ -18,9 +35,9 @@ matrix:
             - libsdl1.2-dev
             - libxml-libxml-perl
             - libxml-libxslt-perl
-            - qt59base
+            - qt512base
       env:
-        - QT_PREFIX=/opt/qt59
+        - QT_PREFIX=/opt/qt512
 env:
   global:
     - PLUGINS=qapplication

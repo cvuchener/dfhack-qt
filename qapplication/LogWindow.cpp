@@ -23,6 +23,18 @@
 
 #include "Log.h"
 
+#if (QT_VERSION < QT_VERSION_CHECK(5, 7, 0))
+template <typename... Ts>
+struct QOverload
+{
+    template <typename T, typename R>
+    static auto of(R (T::*method)(Ts...)) -> R (T::*)(Ts...)
+    {
+        return method;
+    }
+};
+#endif
+
 using namespace qapplication;
 
 enum FilterMode {
