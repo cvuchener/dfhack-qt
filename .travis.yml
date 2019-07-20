@@ -19,6 +19,7 @@ matrix:
             - qtbase5-dev
             - qtbase5-dev-tools
       env:
+        - QT_VERSION=qt5.5
         - QT_PREFIX=/usr/lib/x86_64-linux-gnu/qt5
     - os: linux
       language: generic
@@ -26,23 +27,25 @@ matrix:
       addons:
         apt:
           sources:
-            - sourceline: 'ppa:beineri/opt-qt-5.12.3-xenial'
+            - sourceline: ppa:beineri/opt-qt-5.12.3-xenial
           packages:
             - g++
             - cmake
             - ninja-build
-            - zlib1g-dev 
+            - zlib1g-dev
             - libsdl1.2-dev
             - libxml-libxml-perl
             - libxml-libxslt-perl
             - qt512base
       env:
+        - QT_VERSION=qt5.12
         - QT_PREFIX=/opt/qt512
 env:
   global:
     - PLUGINS=qapplication
     - DFHACK_VERSION=0.44.12-r2
     - DFHACK_DIR=$HOME/dfhack
+    - DFHACK_BUILD_DIR=$DFHACK_DIR/builddir
 before_install:
   - git clone "https://github.com/DFHack/dfhack.git" "$DFHACK_DIR"
   - cd "$DFHACK_DIR"
@@ -51,7 +54,21 @@ before_install:
   - ln -s "$TRAVIS_BUILD_DIR" "$DFHACK_DIR/plugins/qt"
   - echo "add_subdirectory(qt)" > "$DFHACK_DIR/plugins/CMakeLists.custom.txt"
 script:
-  - mkdir "$DFHACK_DIR/builddir"
-  - cd "$DFHACK_DIR/builddir"
+  - mkdir "$DFHACK_BUILD_DIR"
+  - cd "$DFHACK_BUILD_DIR"
   - cmake .. -G Ninja -DCMAKE_PREFIX_PATH="$QT_PREFIX"
   - for plugin in $PLUGINS; do ninja -j 2 $plugin; done
+before_deploy:
+  - mkdir -p "$TRAVIS_BUILD_DIR/hack/plugins"
+  - for plugin in $PLUGINS; do cp "$DFHACK_BUILD_DIR/plugins/qt/$plugin/$plugin.plug.so" "$TRAVIS_BUILD_DIR/hack/plugins/"; done
+  - cd "$TRAVIS_BUILD_DIR"
+  - tar czvf "dfhack-qt-$DFHACK_VERSION-$QT_VERSION.tar.gz" hack
+deploy:
+  provider: releases
+  api_key:
+    secure: gEn+JAAR5PSj4JoYucXz5EsKyk0ssxyc9J8YE4PPF86L5dApn77XDdWR6L/mveWVwUzdH54poCDyM0NSZz/jNvte93EjiCrEIglHkQ4uPpuxfKc7mOIZULd06iq4UhpyUeegFg+y4bM3FEeSKqL0eoqE3VRjwLsSIHssY1X/zbfTQbvMk5r3QIrAZkLEc5sBJFGMxLF/qt3PWEwt8HxvD+GK1tVIkgRA+kDK7ycNNsjH6lcUDptirizR9lHVz+wtTpxCzNkIRCXgFw2+zAjUGZp0NEKy6vKLH1+oH76zOHIjjQNV5uMR91zSj5jGWHze5mLigCmJhtO3fazLtsx0tUT7MxgNvIfNklq/vOIdJjqrXJf53nX0eZ13tqrN0kU98wLf7xNoM1lxsSxQaIleThdimX59FsTUf8DADOQc8UnFZFBNstMnpNvl4K0GxcaCSJRVE/50X2BUsN4PMQfsZpJPw9Z6fLXOjre300nZLihJzfuGPIxWGr0jNYdsIN9pLIiCnA8/CNpb8CkbeT7Yy6Gi3JAO6Isxo3aXm3DAIHjaTDtRAvhFlBPU4WHECqpBXEP4YdQQBlBJTcMI1VQeT5d4mPTRZ5FujuKvb6l2ijbfeEVZgj8RHC5g0jv+jrZoQv6ORDNOc59KuhJuviUvLIJFQYJSXj9JS5zb7z3QmUA=
+  skip_cleanup: true
+  file_glob: true
+  file: dfhack-qt-*.tar.gz
+  on:
+    tags: true
