@@ -19,30 +19,54 @@ matrix:
             - qtbase5-dev
             - qtbase5-dev-tools
       env:
-        - QT_VERSION=qt5.5
         - QT_PREFIX=/usr/lib/x86_64-linux-gnu/qt5
+        - CC=gcc
+        - CXX=g++
     - os: linux
       language: generic
       compiler: gcc
       addons:
         apt:
           sources:
-            - sourceline: ppa:beineri/opt-qt-5.12.3-xenial
+            - ubuntu-toolchain-r-test
           packages:
-            - g++
+            - g++-4.8
             - cmake
             - ninja-build
             - zlib1g-dev
             - libsdl1.2-dev
             - libxml-libxml-perl
             - libxml-libxslt-perl
-            - qt512base
+            - qtbase5-dev
+            - qtbase5-dev-tools
       env:
-        - QT_VERSION=qt5.12
-        - QT_PREFIX=/opt/qt512
+        - QT_PREFIX=/usr/lib/x86_64-linux-gnu/qt5
+        - CC=gcc-4.8
+        - CXX=g++-4.8
+    - os: linux
+      language: generic
+      compiler: gcc
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
+          packages:
+            - g++-7
+            - cmake
+            - ninja-build
+            - zlib1g-dev
+            - libsdl1.2-dev
+            - libxml-libxml-perl
+            - libxml-libxslt-perl
+            - qtbase5-dev
+            - qtbase5-dev-tools
+      env:
+        - QT_PREFIX=/usr/lib/x86_64-linux-gnu/qt5
+        - CC=gcc-7
+        - CXX=g++-7
 env:
   global:
-    - PLUGINS=qapplication
+    - PLUGINS="qapplication/qapplication labors/qtlabors"
     - DFHACK_VERSION=0.44.12-r2
     - DFHACK_DIR=$HOME/dfhack
     - DFHACK_BUILD_DIR=$DFHACK_DIR/builddir
@@ -57,12 +81,12 @@ script:
   - mkdir "$DFHACK_BUILD_DIR"
   - cd "$DFHACK_BUILD_DIR"
   - cmake .. -G Ninja -DCMAKE_PREFIX_PATH="$QT_PREFIX"
-  - for plugin in $PLUGINS; do ninja -j 2 $plugin; done
+  - for plugin in $PLUGINS; do ninja -j 2 ${plugin##*/}; done
 before_deploy:
   - mkdir -p "$TRAVIS_BUILD_DIR/hack/plugins"
-  - for plugin in $PLUGINS; do cp "$DFHACK_BUILD_DIR/plugins/qt/$plugin/$plugin.plug.so" "$TRAVIS_BUILD_DIR/hack/plugins/"; done
+  - for plugin in $PLUGINS; do cp "$DFHACK_BUILD_DIR/plugins/qt/$plugin.plug.so" "$TRAVIS_BUILD_DIR/hack/plugins/"; done
   - cd "$TRAVIS_BUILD_DIR"
-  - tar czvf "dfhack-qt-$DFHACK_VERSION-$QT_VERSION.tar.gz" hack
+  - tar czvf "dfhack-qt-$DFHACK_VERSION-$CC.tar.gz" hack
 deploy:
   provider: releases
   api_key:
